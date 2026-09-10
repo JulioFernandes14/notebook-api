@@ -18,6 +18,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ).UseSnakeCaseNamingConvention();
 });
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

@@ -9,10 +9,12 @@ namespace NotebookApi.Services
     public class UserService
     {
         private readonly AppDbContext _context;
+        private readonly JwtService _jwtService;
 
-        public UserService(AppDbContext context)
+        public UserService(AppDbContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
         }
 
         private async Task ValidateUniqueEmail(string email)
@@ -23,6 +25,11 @@ namespace NotebookApi.Services
             {
                 throw new ConflictException("Email ja vinculado a um usuário ativo");
             }
+        }
+
+        public async Task<UserModel?> FindUserByEmail(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(user => user.Email == email);
         }
 
         public async Task<List<UserResponseDto>> FindAllUsers()
@@ -59,6 +66,29 @@ namespace NotebookApi.Services
                 user.PhoneNumber
              );
             
+        }
+
+        public async Task<LoginResponseDto> Login(LoginRequestDto dto)
+        {
+            var user = await FindUserByEmail(dto.Email);
+
+            if (user is null)
+            {
+                throw new BadRequestException("Email ou senha inválido(s)");
+            }
+
+            var compareHash = BCrypt.Net.BCrypt.Verify(dto.Password, user.Password);
+
+            if (!compareHash)
+            {
+                throw new BadRequestException("Email ou senha inválido(s)");
+            }
+
+            var userDto = new UserResponseDto(user.Id, user.Name, user.Email, user.PhoneNumber);
+            var accessToken = _jwtService.GenerateToken(user);
+
+            return new LoginResponseDto(userDto, accessToken);
+
         }
     }
 }
