@@ -24,9 +24,9 @@ public class UsersController : ControllerBase
     [Route("me")]
     public async Task<ActionResult<List<UserResponseDto>>> Me()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (userId is null)
+        if (!int.TryParse(userIdClaim, out var userId))
         {
             return Unauthorized();
         }

@@ -32,7 +32,7 @@ namespace NotebookApi.Services
             return await _context.Users.FirstOrDefaultAsync(user => user.Email == email);
         }
 
-        public async Task<UserResponseDto> FindUserById(string userId)
+        public async Task<UserResponseDto> FindUserById(int userId)
         {
             var user = await _context.Users
             .Select(user => new UserResponseDto(
@@ -41,7 +41,14 @@ namespace NotebookApi.Services
                 user.Email,
                 user.PhoneNumber
             ))
-            .FirstOrDefaultAsync() ?? throw new NotFoundException("Usuário não encontrado");
+            .FirstOrDefaultAsync(user => user.Id == userId) ?? throw new NotFoundException("Usuário não encontrado");
+            return user;
+        }
+
+        public async Task<UserModel> GetUserModelById(int userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId) ?? throw new NotFoundException("Usuário não encontrado");
+
             return user;
         }
 
