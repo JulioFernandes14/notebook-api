@@ -39,5 +39,16 @@ namespace NotebookApi.Services
             return new LoginResponseDto(userDto, accessToken);
 
         }
+
+        public async Task<UserResponseDto> Register(UserRequestDto dto) 
+        {
+            return await _userService.CreateUser(new UserRequestDto
+            (
+                dto.Name,
+                dto.Email,
+                dto.PhoneNumber,
+                BCrypt.Net.BCrypt.HashPassword(dto.Password)
+            ));
+        }
     }
 }

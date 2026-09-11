@@ -6,7 +6,7 @@ using NotebookApi.Services;
 namespace NotebookApi.Controllers
 {
     [ApiController]
-    [Route("/api/[controller]")]
+    [Route("/api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -17,6 +17,24 @@ namespace NotebookApi.Controllers
         }
 
         [HttpPost]
+        [Route("register")]
+        public async Task<ActionResult<UserResponseDto>> Register(
+        [FromBody] UserRequestDto dto)
+        {
+            try
+            {
+                var user = await _authService.Register(dto);
+
+                return Created("", user);
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("login")]
         public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto login)
         {
             try

@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using NotebookApi.Dtos;
 using NotebookApi.Exceptions;
 using NotebookApi.Services;
+using System.Security.Claims;
 
 namespace NotebookApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/users")]
 public class UsersController : ControllerBase
 {
     private readonly UserService _userService;
@@ -17,26 +20,26 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserResponseDto>>> FindAll()
+    [Authorize]
+    [Route("me")]
+    public async Task<ActionResult<List<UserResponseDto>>> Me()
     {
-        var users = await _userService.FindAllUsers();
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        return Ok(users);
-    }
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
 
-    [HttpPost]
-    public async Task<ActionResult<UserResponseDto>> Create(
-        [FromBody] UserRequestDto dto)
-    {
         try
         {
-            var user = await _userService.CreateUser(dto);
+            var user = await _userService.FindUserById(userId);
 
-            return Created("", user);
+            return Ok(user);
         }
-        catch (ConflictException ex)
+        catch (NotFoundException ex)
         {
-            return Conflict(ex.Message);
+            return NotFound(ex.Message);
         }
     }
 }

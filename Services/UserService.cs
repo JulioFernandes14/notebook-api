@@ -32,16 +32,17 @@ namespace NotebookApi.Services
             return await _context.Users.FirstOrDefaultAsync(user => user.Email == email);
         }
 
-        public async Task<List<UserResponseDto>> FindAllUsers()
+        public async Task<UserResponseDto> FindUserById(string userId)
         {
-            return await _context.Users
+            var user = await _context.Users
             .Select(user => new UserResponseDto(
                 user.Id,
                 user.Name,
                 user.Email,
                 user.PhoneNumber
             ))
-            .ToListAsync();
+            .FirstOrDefaultAsync() ?? throw new NotFoundException("Usuário não encontrado");
+            return user;
         }
 
         public async Task<UserResponseDto> CreateUser(UserRequestDto dto)
@@ -53,7 +54,7 @@ namespace NotebookApi.Services
                 Name = dto.Name,
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                Password = dto.Password
             };
 
             await _context.Users.AddAsync(user);
