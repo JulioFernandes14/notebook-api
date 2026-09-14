@@ -27,6 +27,16 @@ namespace NotebookApi.Services
             }
         }
 
+        private async Task ValidateUniquePhoneNumber(string phoneNumber)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(user => user.PhoneNumber == phoneNumber);
+
+            if (user is not null)
+            {
+                throw new ConflictException("PhoneNumber ja vinculado a um usuário ativo");
+            }
+        }
+
         public async Task<UserModel?> FindUserByEmail(string email)
         {
             return await _context.Users.FirstOrDefaultAsync(user => user.Email == email);
@@ -35,13 +45,14 @@ namespace NotebookApi.Services
         public async Task<UserResponseDto> FindUserById(int userId)
         {
             var user = await _context.Users
+            .Where(user => user.Id == userId)
             .Select(user => new UserResponseDto(
                 user.Id,
                 user.Name,
                 user.Email,
                 user.PhoneNumber
             ))
-            .FirstOrDefaultAsync(user => user.Id == userId) ?? throw new NotFoundException("Usuário não encontrado");
+            .FirstOrDefaultAsync() ?? throw new NotFoundException("Usuário não encontrado");
             return user;
         }
 
@@ -55,6 +66,7 @@ namespace NotebookApi.Services
         public async Task<UserResponseDto> CreateUser(UserRequestDto dto)
         {
             await ValidateUniqueEmail(dto.Email);
+            await ValidateUniquePhoneNumber(dto.PhoneNumber);
 
             UserModel user = new UserModel
             {
