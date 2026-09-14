@@ -16,5 +16,7 @@ namespace NotebookApi.Models
         public string HexColor { get; set; } = String.Empty;
 
         public UserModel User { get; set; } = null!;
+
+        public List<NoteItemModel> NoteItems { get; set; } = [];
     }
 }

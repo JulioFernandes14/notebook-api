@@ -39,7 +39,7 @@ namespace NotebookApi.Services
         {
             var user = await _userService.GetUserModelById(userId);
 
-            await this.ValidateConflictName(dto.Name);
+            await ValidateConflictName(dto.Name);
 
             var note = new NoteModel
             {
@@ -65,8 +65,30 @@ namespace NotebookApi.Services
         {
             return await _context.Notes
                 .Where(note => note.User.Id == userId)
-                .Select(note => new NoteResponseDto(note.Id, note.Name, note.Description, note.HexColor))
+                .Select(note => new NoteResponseDto
+                (
+                    note.Id,
+                    note.Name,
+                    note.Description,
+                    note.HexColor
+                ))
                 .ToListAsync();
+        }
+
+        public async Task<NoteWithItemsResponseDto> GetNoteDetails(int userId, int noteId)
+        {
+            var note = await _context.Notes
+                .Where(note => note.Id == noteId && note.User.Id == userId)
+                .Select(note => new NoteWithItemsResponseDto
+                (
+                    note.Id,
+                    note.Name,
+                    note.Description,
+                    note.HexColor,
+                    note.NoteItems.Select(noteItem => new NoteItemSummaryResponseDto(noteItem.Id, noteItem.Title)).ToList()
+                )).FirstOrDefaultAsync() ?? throw new NotFoundException("Nota não encontrada para o usuário autenticado");
+
+            return note;
         }
 
         public async Task<NoteResponseDto> UpdateNote(int userId, int noteId, UpdateNoteRequestDto dto)
@@ -76,7 +98,7 @@ namespace NotebookApi.Services
 
             if (dto.Name is not null)
             {
-                await this.ValidateConflictName(dto.Name);
+                await ValidateConflictName(dto.Name);
                 note.Name = dto.Name;
             }
 

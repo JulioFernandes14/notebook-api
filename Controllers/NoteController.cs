@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NotebookApi.Dtos;
 using NotebookApi.Dtos.NotebookApi.Dtos;
+using NotebookApi.Exceptions;
 using NotebookApi.Services;
 using System.Security.Claims;
 
@@ -47,6 +48,29 @@ namespace NotebookApi.Controllers
             var notes = await _noteService.GetNotesByUser(userId);
 
             return Ok(notes);
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<ActionResult<List<NoteWithItemsResponseDto>>> GetNoteDetails(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var note = await _noteService.GetNoteDetails(userId, id);
+
+                return Ok(note);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpPatch]
